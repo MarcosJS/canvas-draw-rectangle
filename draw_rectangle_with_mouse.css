@@ -1,0 +1,19 @@
+body{
+  margin: auto 100px;
+}
+
+.element{
+  padding-top: 30px;
+}
+
+.elem-debug{
+  padding-top: 10px;
+}
+
+.content{
+  padding-top: 10px; 
+}
+
+#mycanvas{
+  border:1px solid;
+}

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="draw_rectangle_with_mouse.css">
+    <title>Teste de Execução do Canvas em HTML5</title>
+  </head>
+  <body>
+    <div class="debug element">
+      <div class="coord-mouse">
+        <label for="elem-debug cood-mouse">Coodenada atual do mouse</label>
+        <div>
+          <label for="x">X</label>
+          <input type="text" id="x">
+          <label for="y">Y</label>
+          <input type="text" id="y">
+        </div>
+      </div>
+
+      <div class="elem-debug coord-clicks">
+        <label for="cood-clicks">Coordenadas dos cliques</label>
+        <div>
+          <label for="first-click">1° </label>
+          <input type="text" id="first-click">
+          <label for="second-click">2° </label>
+          <input type="text" id="second-click">
+        </div>
+      </div>
+
+      <div class="elem-debug drawing">
+        <label for="drawing">Controles</label>
+        <div>
+          <label for="drawing">Status</label>
+          <input type="text" id="status">
+        </div>
+      </div>
+    </div>
+
+    <div class="control element">
+      <input type="button" value="Desenhar" id="draw" onclick="drawOn()">
+      <input type="button" value="Selecionar" id="cursor" onclick="selectOn()">
+      <input type="button" value="Limpar" id="reset" onclick="reset()">
+    </div>
+
+    <div class="element content">
+      <canvas id="mycanvas"></canvas>
+    </div>
+
+  </body>
+  <script src="draw_rectangle_with_mouse.js" charset="utf-8"></script>
+</html>
