@@ -1,8 +1,16 @@
-var canvas = new Canvas();
-var draw = false;
-var dragged = null;
+/*O modulo de mapeamento se divide em modos e submodos
+**MODO DE DELIMITAÇÃO:
+    Modo de Criação;
+    Modo de Edição;
+**MODO DE DEFINIÇÃO;
+*/
 
+var canvas = new Canvas();
+var create = false;
+var dragged = null;
+var resized = null;
 var rectSelected = null;
+var cursorModo = null;
 debugOnDocument("status", "selecionando");
 
 function Canvas() {
@@ -48,9 +56,9 @@ function Canvas() {
   };
 }
 
-/*###################################### RECTANGLE ######################################*/
+/*############################################# RECTANGLE #############################################*/
 //Essa função cria um objeto do tipo 'rectangle' a partir da cordenadas top-left e bottom-down
-function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId) {
+function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin = 0) {
   this.id = newId;
   this.topLeft = [topLeftX, topLeftY];
   this.bottomRight = [bottomRightX, bottomRightY];
@@ -63,6 +71,9 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId) {
   this.isSelected = false;
   //this.draggrable = false;
   this.startDrag = null;
+  this.startResize = null;
+  this.marinPosition = null;
+  this.margin = margin;
 
   this.containPoint = function(x, y) {
     return (x >= this.topLeft[0] && x <= this.bottomRight[0]) && (y >= this.topLeft[1] && y <= this.bottomRight[1]);
@@ -80,10 +91,10 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId) {
 
     if (this.isSelected) {
       this.container.context.strokeStyle = this.selectedColor;
-      this.container.context.rect(this.topLeft[0] - 2.5, this.topLeft[1] - 2.5, 5, 5);
-      this.container.context.rect(this.bottomRight[0] - 2.5, this.topLeft[1] - 2.5, 5, 5);
-      this.container.context.rect(this.bottomRight[0] - 2.5, this.bottomRight[1] - 2.5, 5, 5);
-      this.container.context.rect(this.topLeft[0] - 2.5, this.bottomRight[1] - 2.5, 5, 5);
+      this.container.context.rect(this.topLeft[0], this.topLeft[1], margin, margin);
+      this.container.context.rect(this.bottomRight[0] - margin, this.topLeft[1], margin, margin);
+      this.container.context.rect(this.bottomRight[0] - margin, this.bottomRight[1] - margin, margin, margin);
+      this.container.context.rect(this.topLeft[0], this.bottomRight[1] - margin, margin, margin);
     }
     this.container.context.stroke();
   };
@@ -95,15 +106,102 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId) {
   };
 
   this.draggedTo = function(point) {
-      let varX = point[0] - this.startDrag[0];
-      let varY = point[1] - this.startDrag[1];
+    //canvas.element.width;
+    //canvas.element.height;
+    let varX = point[0] - this.startDrag[0];
+    let varY = point[1] - this.startDrag[1];
+    if((this.topLeft[0]+varX >= 0) && (this.topLeft[1]+varY >= 0) && (this.bottomRight[0]+varX <= canvas.element.width) && (this.bottomRight[1]+varY <= canvas.element.height)) {
       this.topLeft[0] += varX;
       this.topLeft[1] += varY;
       this.bottomRight[0] += varX;
       this.bottomRight[1] += varY;
-      this.startDrag = point;
-      this.container.redraw();
-      console.log("variação em x "+varX+" ,variação em y "+varY);
+    }
+    this.startDrag = point;
+    this.container.redraw();
+    console.log("[DRAGGED] variação em x "+varX+" ,variação em y "+varY);
+  };
+
+  this.resize = function(point) {
+    let varX = point[0] - this.startResize[0];
+    let varY = point[1] - this.startResize[1];
+    switch (marginPoint) {
+      case 0:
+        if((this.topLeft[0] + 2*margin + varX) < this.bottomRight[0]) {
+          this.topLeft[0] += varX;
+        }
+        if((this.topLeft[1] + 2*margin + varY) < this.bottomRight[1]) {
+          this.topLeft[1] += varY;
+        }
+        break;
+      case 1:
+        if((this.bottomRight[0] + varX) > this.topLeft[0] + 2*margin) {
+          this.bottomRight[0] += varX;
+        }
+        if((this.topLeft[1] + 2*margin + varY) < this.bottomRight[1]) {
+          this.topLeft[1] += varY;
+        }
+        break;
+      case 2:
+        if((this.bottomRight[0] + varX) > this.topLeft[0] + 2*margin) {
+          this.bottomRight[0] += varX;
+        }
+        if((this.bottomRight[1] + varY) > this.topLeft[1] + 2*margin) {
+          this.bottomRight[1] += varY;
+        }
+        break;
+      case 3:
+        if((this.topLeft[0] + 2*margin + varX) < this.bottomRight[0]) {
+          this.topLeft[0] += varX;
+        }
+        if((this.bottomRight[1] + varY) > this.topLeft[1] + 2*margin) {
+          this.bottomRight[1] += varY;
+        }
+        break;
+      case 4:
+        if((this.topLeft[1] + 2*margin + varY) < this.bottomRight[1]) {
+          this.topLeft[1] += varY;
+        }
+        break;
+      case 5:
+        if((this.bottomRight[0] + varX) > this.topLeft[0] + 2*margin) {
+          this.bottomRight[0] += varX;
+        }
+        break;
+      case 6:
+        if((this.bottomRight[1] + varY) > this.topLeft[1] + 2*margin) {
+          this.bottomRight[1] += varY;
+        }
+        break;
+      case 7:
+        if((this.topLeft[0] + 2*margin + varX) < this.bottomRight[0]) {
+          this.topLeft[0] += varX;
+        }
+        break;
+    }
+    this.startResize = point;
+    this.container.redraw();
+  };
+
+  this.isReadyToResize = function(x, y) {
+    result = -1;
+    if((x >= this.topLeft[0] && x <= this.topLeft[0]+margin) && (y >= this.topLeft[1] && y <= this.topLeft[1]+margin)) {
+      result = 0;//canto superior esquerdo
+    } else if ((x >= this.bottomRight[0]-margin && x <= this.bottomRight[0]) && (y >= this.topLeft[1] && y <= this.topLeft[1]+margin)) {
+      result = 1;//canto superior direito
+    } else if ((x >= this.bottomRight[0]-margin && x <= this.bottomRight[0]) && (y >= this.bottomRight[1]-margin && y <= this.bottomRight[1])) {
+      result = 2;//canto inferior direito
+    } else if ((x >= this.topLeft[0] && x <= this.topLeft[0]+margin) && (y >= this.bottomRight[1]-margin && y <= this.bottomRight[1])) {
+      result = 3;//canto inferio esquerdo
+    } else if ((x > this.topLeft[0]+margin && x < this.bottomRight[0]-margin) && (y >= this.topLeft[1] && y < this.topLeft[1]+margin)) {
+      result = 4;//lado superior
+    } else if ((x >= this.bottomRight[0]-margin && x <= this.bottomRight[0]) && (y > this.topLeft[1]+margin && y < this.bottomRight[1]-margin)) {
+      result = 5;//lado direito
+    } else if ((x > this.topLeft[0]+margin && x < this.bottomRight[0]-margin) && (y >= this.bottomRight[1]-margin && y <= this.bottomRight[1])) {
+      result = 6;//lado inferior
+    } else if ((x >= this.topLeft[0] && x <= this.topLeft[0]+margin) && (y > this.topLeft[1]+margin && y < this.bottomRight[1]-margin)) {
+      result = 7;//lado esquerdo
+    }
+    return result;
   };
 
   this.selected = function() {
@@ -190,7 +288,7 @@ function newRectangleFromMouse(firstCoord, secondCoord) {
     topLeft[1] = firstCoord[1];
     bottomRight[1] = secondCoord[1]
   }
-  return new Rectangle(topLeft[0], topLeft[1], bottomRight[0], bottomRight[1], repoRectangles.size() + 1);
+  return new Rectangle(topLeft[0], topLeft[1], bottomRight[0], bottomRight[1], repoRectangles.size() + 1, 5);
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -198,21 +296,35 @@ function newRectangleFromMouse(firstCoord, secondCoord) {
   ------------------------------------------------------------------------------------------------*/
 
 canvas.element.addEventListener("mousedown", function(event) {
+  var eventX = event.offsetX;
+  var eventY = event.offsetY
   console.log("mousedown");
-  if(!draw) {
-    let rectSelected = repoRectangles.getRectContainPoint(event.offsetX, event.offsetY);
+  if(!create) {
+    let rectSelected = repoRectangles.getRectContainPoint(eventX, eventY);
     if(rectSelected && rectSelected.isSelected) {
-      dragged = rectSelected;
+      /*dragged = rectSelected;
       dragged.startDrag = ([event.offsetX, event.offsetY]);
-      console.log("rect: "+dragged.id+" é arrastavel");
+      console.log("rect: "+dragged.id+" é arrastavel");*/
+      marginPoint = rectSelected.isReadyToResize(eventX, eventY);
+      if(marginPoint >= 0) {
+        resized = rectSelected;
+        resized.startResize = ([eventX, eventY]);
+        resized.marinPosition = marginPoint;
+      } else {
+        dragged = rectSelected;
+        dragged.startDrag = ([eventX, eventY]);
+        console.log("rect: "+dragged.id+" é arrastavel");
+      }
     }
   }
 });
 
 canvas.element.addEventListener("mouseup", function(event) {
   console.log("mouseup");
-  if(!draw) {
-    if(dragged != null) {
+  if(!create) {
+    if(resized != null) {
+      resized = null;
+    } else if(dragged != null) {
         console.log("rect: "+dragged.id+" não é arrastavel");
         dragged = null;
       }
@@ -222,31 +334,51 @@ canvas.element.addEventListener("mouseup", function(event) {
 canvas.element.addEventListener("mousemove", function(event) {
   var eventX = event.offsetX;
   var eventY = event.offsetY;
-  if (canvas.drawingNewRect) {
+
+  //caso 1
+  if (canvas.drawingNewRect) {//Se estiver desenhando um retangulo
     debugOnDocument("status", "desenhando");
     canvas.redraw();
     let rect = newRectangleFromMouse(canvas.firstPoint, [eventX, eventY]);
     rect.container = canvas;
     rect.drawRect();
+
+  //caso 2
+  }else if(resized != null) {
+    debugOnDocument("status", "redimensionando");
+    resized.resize([eventX, eventY]);
+  //caso 3
+  } else if(dragged != null) {//Se estiver movendo algum retangulo
+    debugOnDocument("status", "movendo");
+    dragged.draggedTo([eventX, eventY]);
+
   } else {
-    debugOnDocument("status", "destacando");
-    if(dragged != null) {
-      dragged.draggedTo([eventX, eventY]);
-    } else {
-      var rectSelected = repoRectangles.getRectContainPoint(eventX, eventY);
-      if(rectSelected != null) {
-        if(rectSelected.isSelected) {
+    //Recuperando o retangulo sobre o qual esta o mouse
+    var rectSelected = repoRectangles.getRectContainPoint(eventX, eventY);
+    if(rectSelected != null) {
+      if(rectSelected.isSelected) {//Se o retangulo recuperado estiver selecionado
+        //caso 4 - o cursor esta sobre um retangulo selecionado
+        let margin = rectSelected.isReadyToResize(eventX, eventY);
+        if(margin == 0 || margin == 2) {
+          canvas.element.style.cursor = "nw-resize";
+        } else if(margin == 1 || margin == 3) {
+          canvas.element.style.cursor = "ne-resize";
+        } else if(margin == 4 || margin == 6) {
+          canvas.element.style.cursor = "n-resize";
+        } else if(margin == 5 || margin == 7) {
+          canvas.element.style.cursor = "e-resize";
+        } else {
           canvas.element.style.cursor = "move";
         }
-        rectSelected.highlight();
       } else {
-        if(!draw){
-          canvas.element.style.cursor = "auto";
-        }
-        canvas.redraw();
+        //caso 5 - o cursor esta sobre um retangulo não selecionado
+        canvas.element.style.cursor = cursorModo;
       }
+      rectSelected.highlight();
+    } else {
+      //caso 5 - o cursor não esta sobre nenhum triangulo
+      canvas.element.style.cursor = cursorModo;
     }
-
   }
   debugOnDocument("x", eventX);
   debugOnDocument("y", eventY);
@@ -255,7 +387,7 @@ canvas.element.addEventListener("mousemove", function(event) {
 canvas.element.addEventListener("click", function(event) {
   var eventX = event.offsetX;
   var eventY = event.offsetY;
-  if(draw) {
+  if(create) {
     if(!canvas.drawingNewRect) {
       canvas.onOffDrawingNewRect();
       canvas.firstPoint = [eventX, eventY];
@@ -289,14 +421,16 @@ canvas.element.addEventListener("click", function(event) {
   }
 });
 
-function selectOn() {
-  canvas.element.style.cursor = "auto";
-  draw = false;
+function editOn() {
+  canvas.element.style.cursor = cursorModo = "auto";
+  create = false;
+  debugOnDocument("status", "selecionando");
 }
 
-function drawOn() {
-  draw = true;
-  canvas.element.style.cursor = "crosshair";
+function createOn() {
+  canvas.element.style.cursor = cursorModo = "crosshair";
+  create = true;
+  debugOnDocument("status", "posicionando");
   if(rectSelected != null) {
     rectSelected.selected(canvas);
     rectSelected = null;
