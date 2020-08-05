@@ -6,8 +6,21 @@
     <title>Teste de Execução do Canvas em HTML5</title>
   </head>
   <body>
+
+    <div class="content">
+      <div class="control element">
+        <input type="button" value="Criar" id="create" onclick="createOn()">
+        <input type="button" value="Editar" id="edit" onclick="editOn()">
+        <input type="button" value="Limpar" id="reset" onclick="reset()">
+      </div>
+
+      <div class="element content">
+        <canvas id="mycanvas"></canvas>
+      </div>
+    </div>
+
     <div class="debug element">
-      <div class="coord-mouse">
+      <div class="elem-debug coord-mouse">
         <label for="elem-debug cood-mouse">Coodenada atual do mouse</label>
         <div>
           <label for="x">X</label>
@@ -27,23 +40,17 @@
         </div>
       </div>
 
-      <div class="elem-debug creating">
-        <label for="creating">Controles</label>
-        <div>
-          <label for="creating">Status</label>
-          <input type="text" id="status">
-        </div>
+      <div class="elem-debug status">
+        <label for="status">Status</label>
+        <input type="text" id="status">
       </div>
-    </div>
 
-    <div class="control element">
-      <input type="button" value="Criar" id="create" onclick="createOn()">
-      <input type="button" value="Editar" id="edit" onclick="editOn()">
-      <input type="button" value="Limpar" id="reset" onclick="reset()">
-    </div>
+      <div class="elem-debug list">
+        <label for="status">Retangulos</label>
+        <ul id="list">
 
-    <div class="element content">
-      <canvas id="mycanvas"></canvas>
+        </ul>
+      </div>
     </div>
 
   </body>

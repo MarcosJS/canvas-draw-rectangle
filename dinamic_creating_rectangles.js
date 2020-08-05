@@ -69,7 +69,6 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
   this.selectedColor = "green";
   this.color = this.primaryColor;
   this.isSelected = false;
-  //this.draggrable = false;
   this.startDrag = null;
   this.startResize = null;
   this.marinPosition = null;
@@ -106,8 +105,6 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
   };
 
   this.draggedTo = function(point) {
-    //canvas.element.width;
-    //canvas.element.height;
     let varX = point[0] - this.startDrag[0];
     let varY = point[1] - this.startDrag[1];
     if((this.topLeft[0]+varX >= 0) && (this.topLeft[1]+varY >= 0) && (this.bottomRight[0]+varX <= canvas.element.width) && (this.bottomRight[1]+varY <= canvas.element.height)) {
@@ -227,6 +224,7 @@ var repoRectangles = {
   add: function(rectangle) {
     this.rectangles[this.rectangles.length] = rectangle;
     this.fixPositionRects();
+    updateList();
   },
 
   getRectangles: function() {
@@ -235,6 +233,7 @@ var repoRectangles = {
 
   removeAll: function() {
     this.rectangles = [];
+    updateList();
   },
 
   size: function() {
@@ -266,6 +265,17 @@ var repoRectangles = {
 
 function debugOnDocument(element, value) {
   document.getElementById(element).value = value;
+}
+
+function updateList() {
+  let list = document.getElementById("list");
+  list.innerHTML = "";
+  let rectangles = repoRectangles.getRectangles();
+  for (var i = 0; i < rectangles.length; i++) {
+    let item = document.createElement("li");
+    item.innerHTML = rectangles[i].id;
+    list.appendChild(item);
+  }
 }
 
 //Essa função manipula as coordenadas dos cliques do mouse para desenhar um retangulo
@@ -302,9 +312,6 @@ canvas.element.addEventListener("mousedown", function(event) {
   if(!create) {
     let rectSelected = repoRectangles.getRectContainPoint(eventX, eventY);
     if(rectSelected && rectSelected.isSelected) {
-      /*dragged = rectSelected;
-      dragged.startDrag = ([event.offsetX, event.offsetY]);
-      console.log("rect: "+dragged.id+" é arrastavel");*/
       marginPoint = rectSelected.isReadyToResize(eventX, eventY);
       if(marginPoint >= 0) {
         resized = rectSelected;
@@ -371,7 +378,7 @@ canvas.element.addEventListener("mousemove", function(event) {
           canvas.element.style.cursor = "move";
         }
       } else {
-        //caso 5 - o cursor esta sobre um retangulo não selecionado
+        //caso 4 - o cursor esta sobre um retangulo não selecionado
         canvas.element.style.cursor = cursorModo;
       }
       rectSelected.highlight();
