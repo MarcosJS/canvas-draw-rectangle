@@ -18,7 +18,7 @@ function Canvas() {
   this.firstPoint =  [];
   this.secondPoint = [];
   this.element = document.getElementById('mycanvas');
-  this.element.width = 800;
+  this.element.width = 600;
   this.element.height = 400;
   this.context = this.element.getContext('2d');
 
@@ -241,6 +241,18 @@ var repoRectangles = {
   },
 
   fixPositionRects: function() {
+    for(var i = this.rectangles.length - 1; i > 0; i--) {
+      for(var j = i; j > 0; j--) {//com j = i garante-se que a comparação vai ser feita somente com o anterior
+        if(this.rectangles[j - 1].containRect(this.rectangles[i])) {//verificando se retangulo esta contigo no anterior
+          var temp = this.rectangles[j - 1];
+          this.rectangles[j - 1] = this.rectangles[i];
+          this.rectangles[i] = temp;
+        }
+      }
+    }
+  },
+  
+  /*fixPositionRects: function() {
     for (var i = this.rectangles.length; i > 1; i--) {
       if(this.rectangles[i - 2].containRect(this.rectangles[i - 1])) {
         var temp = this.rectangles[i - 2];
@@ -248,7 +260,7 @@ var repoRectangles = {
         this.rectangles[i - 1] = temp;
       }
     }
-  },
+  },*/
 
   //Essa função retorna o retangulo mais profundo sobre o qual o mouse esta em cima
   getRectContainPoint: function (x, y) {
