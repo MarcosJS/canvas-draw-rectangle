@@ -1,8 +1,8 @@
 /*O modulo de mapeamento se divide em modos e submodos
-**MODO DE DELIMITAÇÃO:
-    Modo de Criação;
-    Modo de Edição;
-**MODO DE DEFINIÇÃO;
+**MODO DE DELIMITAÇÃO[feito]:
+    Modo de Criação[feito];
+    Modo de Edição[feito];
+**MODO DE DEFINIÇÃO[em construcao];
 */
 
 var canvas = new Canvas();
@@ -11,6 +11,7 @@ var dragged = null;
 var resized = null;
 var rectSelected = null;
 var cursorModo = null;
+var count = 0;
 debugOnDocument("status", "selecionando");
 
 function Canvas() {
@@ -39,12 +40,6 @@ function Canvas() {
   //Essa função apaga o Canvas
   this.clear = function() {
     this.context.clearRect(0, 0, this.element.width, this.element.height);
-  };
-
-  //Essa função reinicia toda a operação de desenho no canvas
-  this.reset = function() {
-    repoRectangles.removeAll();
-    this.clear();
   };
 
   this.onOffDrawingNewRect = function() {
@@ -114,6 +109,8 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
       this.bottomRight[1] += varY;
     }
     this.startDrag = point;
+    repoRectangles.fixPrioritRects();
+    updateList();
     this.container.redraw();
     console.log("[DRAGGED] variação em x "+varX+" ,variação em y "+varY);
   };
@@ -176,6 +173,8 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
         break;
     }
     this.startResize = point;
+    repoRectangles.fixPrioritRects();
+    updateList();
     this.container.redraw();
   };
 
@@ -223,8 +222,16 @@ var repoRectangles = {
 
   add: function(rectangle) {
     this.rectangles[this.rectangles.length] = rectangle;
-    this.fixPositionRects();
-    updateList();
+    this.fixPrioritRects();
+  },
+
+  remove: function(id) {
+    for(i = 0; i < this.rectangles.length; i++) {
+      if(this.rectangles[i].id == id) {
+        this.rectangles.splice(i,1);
+        break;
+      }
+    }
   },
 
   getRectangles: function() {
@@ -233,14 +240,9 @@ var repoRectangles = {
 
   removeAll: function() {
     this.rectangles = [];
-    updateList();
   },
 
-  size: function() {
-    return this.rectangles.length;
-  },
-
-  fixPositionRects: function() {
+  fixPrioritRects: function() {
     for(var i = this.rectangles.length - 1; i > 0; i--) {
       for(var j = i; j > 0; j--) {//com j = i garante-se que a comparação vai ser feita somente com o anterior
         if(this.rectangles[j - 1].containRect(this.rectangles[i])) {//verificando se retangulo esta contigo no anterior
@@ -251,16 +253,6 @@ var repoRectangles = {
       }
     }
   },
-  
-  /*fixPositionRects: function() {
-    for (var i = this.rectangles.length; i > 1; i--) {
-      if(this.rectangles[i - 2].containRect(this.rectangles[i - 1])) {
-        var temp = this.rectangles[i - 2];
-        this.rectangles[i - 2] = this.rectangles[i - 1];
-        this.rectangles[i - 1] = temp;
-      }
-    }
-  },*/
 
   //Essa função retorna o retangulo mais profundo sobre o qual o mouse esta em cima
   getRectContainPoint: function (x, y) {
@@ -280,14 +272,53 @@ function debugOnDocument(element, value) {
 }
 
 function updateList() {
-  let list = document.getElementById("list");
-  list.innerHTML = "";
+  let table = document.getElementById("list");
+  table.innerHTML = "";
   let rectangles = repoRectangles.getRectangles();
   for (var i = 0; i < rectangles.length; i++) {
-    let item = document.createElement("li");
-    item.innerHTML = rectangles[i].id;
-    list.appendChild(item);
+    let line = document.createElement("tr");
+    let colum1 = document.createElement("td");
+    colum1.id = rectangles[i].id;
+    colum1.innerHTML = rectangles[i].id;
+    let colum2 = document.createElement("td");
+
+    //Criando o botão de excluir
+    let button = document.createElement("button");
+    button.type = "button";
+    button.innerHTML = "Excluir";
+    button.addEventListener("click", function() {
+      repoRectangles.remove(colum1.id);
+      updateList();
+      canvas.redraw();
+    });
+
+    colum2.appendChild(button);
+    line.appendChild(colum1);
+    line.appendChild(colum2);
+    table.appendChild(line);
   }
+}
+
+function editOn() {
+  canvas.element.style.cursor = cursorModo = "auto";
+  create = false;
+  debugOnDocument("status", "selecionando");
+}
+
+function createOn() {
+  canvas.element.style.cursor = cursorModo = "crosshair";
+  create = true;
+  debugOnDocument("status", "posicionando");
+  if(rectSelected != null) {
+    rectSelected.selected(canvas);
+    rectSelected = null;
+  }
+}
+
+function reset() {
+  repoRectangles.removeAll();
+  canvas.clear();
+  updateList();
 }
 
 //Essa função manipula as coordenadas dos cliques do mouse para desenhar um retangulo
@@ -310,7 +341,7 @@ function newRectangleFromMouse(firstCoord, secondCoord) {
     topLeft[1] = firstCoord[1];
     bottomRight[1] = secondCoord[1]
   }
-  return new Rectangle(topLeft[0], topLeft[1], bottomRight[0], bottomRight[1], repoRectangles.size() + 1, 5);
+  return new Rectangle(topLeft[0], topLeft[1], bottomRight[0], bottomRight[1], 0, 5);
 }
 
 /*------------------------------------------------------------------------------------------------
@@ -320,7 +351,6 @@ function newRectangleFromMouse(firstCoord, secondCoord) {
 canvas.element.addEventListener("mousedown", function(event) {
   var eventX = event.offsetX;
   var eventY = event.offsetY
-  console.log("mousedown");
   if(!create) {
     let rectSelected = repoRectangles.getRectContainPoint(eventX, eventY);
     if(rectSelected && rectSelected.isSelected) {
@@ -339,7 +369,6 @@ canvas.element.addEventListener("mousedown", function(event) {
 });
 
 canvas.element.addEventListener("mouseup", function(event) {
-  console.log("mouseup");
   if(!create) {
     if(resized != null) {
       resized = null;
@@ -416,7 +445,9 @@ canvas.element.addEventListener("click", function(event) {
       canvas.secondPoint = [eventX, eventY];
       let rect = newRectangleFromMouse(canvas.firstPoint, canvas.secondPoint);
       rect.container = canvas;
+      rect.id = ++count;
       repoRectangles.add(rect);
+      updateList();
       canvas.redraw();
       debugOnDocument("second-click", "X: "+eventX+"; Y: "+eventY);
     }
@@ -440,22 +471,7 @@ canvas.element.addEventListener("click", function(event) {
   }
 });
 
-function editOn() {
-  canvas.element.style.cursor = cursorModo = "auto";
-  create = false;
-  debugOnDocument("status", "selecionando");
-}
-
-function createOn() {
-  canvas.element.style.cursor = cursorModo = "crosshair";
-  create = true;
-  debugOnDocument("status", "posicionando");
-  if(rectSelected != null) {
-    rectSelected.selected(canvas);
-    rectSelected = null;
-  }
-}
-
-function reset() {
-  canvas.reset();
-}
+canvas.element.addEventListener("contextmenu", function(event) {
+  document.getElementById("contextmenu").style.visibility = 'visible';
+  console.log("menu de contexto");
+});

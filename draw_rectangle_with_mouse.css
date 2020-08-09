@@ -16,6 +16,23 @@ body {
   padding-top: 10px;
 }
 
+table {
+  width: 100%;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+
+th, td {
+  text-align: left;
+}
+
+#contextmenu {
+  
+  visibility: hidden;
+}
+
 #mycanvas {
   border: 1px solid;
 }

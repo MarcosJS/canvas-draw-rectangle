@@ -8,6 +8,7 @@
   <body>
 
     <div class="content">
+
       <div class="control element">
         <input type="button" value="Criar" id="create" onclick="createOn()">
         <input type="button" value="Editar" id="edit" onclick="editOn()">
@@ -15,8 +16,16 @@
       </div>
 
       <div class="element content">
-        <canvas id="mycanvas"></canvas>
+        <canvas id="mycanvas">
+        </canvas>
+
+        <div id="contextmenu">
+          <ul>
+            <li>Excluir</li>
+          </ul>
+        </div>
       </div>
+
     </div>
 
     <div class="debug element">
@@ -46,10 +55,15 @@
       </div>
 
       <div class="elem-debug list">
-        <label for="status">Retangulos</label>
-        <ul id="list">
-
-        </ul>
+        <table>
+          <thead>
+            <tr>
+              <th colspan="2">Retangulo</th>
+            </tr>
+          </thead>
+          <tbody id="list">
+          </tbody>
+        </table>
       </div>
     </div>
 
