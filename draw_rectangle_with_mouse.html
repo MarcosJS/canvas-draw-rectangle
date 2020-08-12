@@ -7,66 +7,68 @@
   </head>
   <body>
 
-    <div class="content">
+    <div id="page">
 
-      <div class="control element">
-        <input type="button" value="Criar" id="create" onclick="createOn()">
-        <input type="button" value="Editar" id="edit" onclick="editOn()">
-        <input type="button" value="Limpar" id="reset" onclick="reset()">
-      </div>
+      <div class="content">
 
-      <div class="element content">
-        <canvas id="mycanvas">
-        </canvas>
+        <div class="control">
+          <input type="button" value="Criar" id="create" onclick="createOn()">
+          <input type="button" value="Editar" id="edit" onclick="editOn()">
+          <input type="button" value="Limpar" id="reset" onclick="reset()">
+        </div>
+
+        <div class="canvas">
+          <canvas id="mycanvas">
+          </canvas>
+        </div>
 
         <div id="contextmenu">
           <ul>
             <li>Excluir</li>
           </ul>
         </div>
+
       </div>
 
-    </div>
+      <div class="debug">
+        <div class="elem-debug coord-mouse">
+          <label for="elem-debug cood-mouse">Coodenada atual do mouse</label>
+          <div>
+            <label for="x">X</label>
+            <input type="text" id="x">
+            <label for="y">Y</label>
+            <input type="text" id="y">
+          </div>
+        </div>
 
-    <div class="debug element">
-      <div class="elem-debug coord-mouse">
-        <label for="elem-debug cood-mouse">Coodenada atual do mouse</label>
-        <div>
-          <label for="x">X</label>
-          <input type="text" id="x">
-          <label for="y">Y</label>
-          <input type="text" id="y">
+        <div class="elem-debug coord-clicks">
+          <label for="cood-clicks">Coordenadas dos cliques</label>
+          <div>
+            <label for="first-click">1° </label>
+            <input type="text" id="first-click">
+            <label for="second-click">2° </label>
+            <input type="text" id="second-click">
+          </div>
+        </div>
+
+        <div class="elem-debug status">
+          <label for="status">Status</label>
+          <input type="text" id="status">
+        </div>
+
+        <div class="elem-debug list">
+          <table>
+            <thead>
+              <tr>
+                <th colspan="2">Retangulo</th>
+              </tr>
+            </thead>
+            <tbody id="list">
+            </tbody>
+          </table>
         </div>
       </div>
-
-      <div class="elem-debug coord-clicks">
-        <label for="cood-clicks">Coordenadas dos cliques</label>
-        <div>
-          <label for="first-click">1° </label>
-          <input type="text" id="first-click">
-          <label for="second-click">2° </label>
-          <input type="text" id="second-click">
-        </div>
-      </div>
-
-      <div class="elem-debug status">
-        <label for="status">Status</label>
-        <input type="text" id="status">
-      </div>
-
-      <div class="elem-debug list">
-        <table>
-          <thead>
-            <tr>
-              <th colspan="2">Retangulo</th>
-            </tr>
-          </thead>
-          <tbody id="list">
-          </tbody>
-        </table>
-      </div>
     </div>
-
   </body>
   <script src="dinamic_creating_rectangles.js" charset="utf-8"></script>
 </html>

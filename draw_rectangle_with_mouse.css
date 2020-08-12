@@ -1,19 +1,34 @@
 body {
-  margin: auto 50px;
+  margin: 0;
+  padding: 8px;
+}
+
+#page {
+  display: block;
+  background-color: blue;
 }
 
 .content {
-  padding-top: 10px;
   float: left;
+  padding: 8px;
+  border: 1px solid;
+  border-radius: 8px;
+}
+
+.control {
+    margin: 8px 0;
 }
 
 .debug {
+  margin-left: 8px;
+  padding: 8px;
+  border: 1px solid;
+  border-radius: 8px;
   float: left;
-  padding: 5px;
 }
 
 .elem-debug {
-  padding-top: 10px;
+  margin-top: 8px;
 }
 
 table {
@@ -28,11 +43,29 @@ th, td {
   text-align: left;
 }
 
-#contextmenu {
-  
-  visibility: hidden;
-}
-
 #mycanvas {
   border: 1px solid;
+}
+
+#contextmenu {
+  display: none;
+  background-color: green;
+  width: 200px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+}
+
+#contextmenu ul{
+  margin: 0px;
+  padding: 0px;
+}
+
+#contextmenu li{
+  background-color: #eee;
+  list-style: none;
+}
+
+#contextmenu li:hover{
+  background-color: #ccc;
 }

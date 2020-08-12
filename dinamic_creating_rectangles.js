@@ -471,7 +471,21 @@ canvas.element.addEventListener("click", function(event) {
   }
 });
 
+var contextMenu = document.getElementById("contextmenu");
+
+function displayContextMenu(display) {
+  contextMenu.style.display = display ? 'block' : 'none';
+}
+
 canvas.element.addEventListener("contextmenu", function(event) {
-  document.getElementById("contextmenu").style.visibility = 'visible';
-  console.log("menu de contexto");
+  event.preventDefault();
+  displayContextMenu(true);
+  contextMenu.style.top = event.y+'px';
+  contextMenu.style.left = event.x+'px';
+  console.log(event);
+});
+
+document.getElementById("page").addEventListener('click', function() {
+  console.log("hide menu");
+  displayContextMenu(false);
 });
