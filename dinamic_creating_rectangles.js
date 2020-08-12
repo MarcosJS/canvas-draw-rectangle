@@ -482,10 +482,8 @@ canvas.element.addEventListener("contextmenu", function(event) {
   displayContextMenu(true);
   contextMenu.style.top = event.y+'px';
   contextMenu.style.left = event.x+'px';
-  console.log(event);
 });
 
-document.getElementById("page").addEventListener('click', function() {
-  console.log("hide menu");
+document.addEventListener('mousedown', function(event) {
   displayContextMenu(false);
 });
