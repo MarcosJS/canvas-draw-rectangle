@@ -3,16 +3,16 @@ body {
   padding: 8px;
 }
 
-#page {
-  display: block;
-  background-color: blue;
-}
-
 .content {
   float: left;
   padding: 8px;
   border: 1px solid;
   border-radius: 8px;
+  background-color: #fafafa;
+}
+
+.canvas {
+  background-color: white;
 }
 
 .control {
@@ -49,23 +49,18 @@ th, td {
 
 #contextmenu {
   display: none;
-  background-color: green;
   width: 200px;
   position: absolute;
   top: 0px;
   left: 0px;
-}
-
-#contextmenu ul{
-  margin: 0px;
-  padding: 0px;
-}
-
-#contextmenu li{
   background-color: #eee;
-  list-style: none;
 }
 
-#contextmenu li:hover{
+.context-menu-item {
+  padding: 4px;
+  padding-left: 20px;
+}
+
+.context-menu-item:hover {
   background-color: #ccc;
 }

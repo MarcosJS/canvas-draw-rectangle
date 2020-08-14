@@ -12,6 +12,8 @@ var resized = null;
 var rectSelected = null;
 var cursorModo = null;
 var count = 0;
+var cMenu = false;
+
 debugOnDocument("status", "selecionando");
 
 function Canvas() {
@@ -112,7 +114,7 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
     repoRectangles.fixPrioritRects();
     updateList();
     this.container.redraw();
-    console.log("[DRAGGED] variação em x "+varX+" ,variação em y "+varY);
+    //console.log("[DRAGGED] variação em x "+varX+" ,variação em y "+varY);
   };
 
   this.resize = function(point) {
@@ -299,6 +301,32 @@ function updateList() {
   }
 }
 
+function removeRect(id) {
+  repoRectangles.remove(id);
+}
+
+function displayContextMenu(display, rect = null, e = null) {
+  cMenu = display;
+  let contextMenu = document.getElementById("contextmenu");
+  contextMenu.style.display = display ? 'block' : 'none';
+  if(display) {
+    contextMenu.innerHTML = "";
+
+    let div = document.createElement("div");
+    div.className = "context-menu-item";
+    div.addEventListener("click", function() {console.log("remove from contextmenu");removeRect(rect.id)}, true);
+
+    let label = document.createElement("label");
+    label.innerHTML = "Excluir retangulo ["+rect.id+"]";
+
+    div.appendChild(label);
+    contextMenu.appendChild(div);
+    e.preventDefault();
+    contextMenu.style.top = e.y+'px';
+    contextMenu.style.left = e.x+'px';
+  }
+}
+
 function editOn() {
   canvas.element.style.cursor = cursorModo = "auto";
   create = false;
@@ -351,9 +379,9 @@ function newRectangleFromMouse(firstCoord, secondCoord) {
 canvas.element.addEventListener("mousedown", function(event) {
   var eventX = event.offsetX;
   var eventY = event.offsetY
-  if(!create) {
+  if(!create && (event.buttons == 1)) {
     let rectSelected = repoRectangles.getRectContainPoint(eventX, eventY);
-    if(rectSelected && rectSelected.isSelected) {
+    if(rectSelected && rectSelected.isSelected) {//retangulo sobre o qual esta o mouse é selecionado e o menu de contexto nao foi ativado
       marginPoint = rectSelected.isReadyToResize(eventX, eventY);
       if(marginPoint >= 0) {
         resized = rectSelected;
@@ -433,6 +461,7 @@ canvas.element.addEventListener("mousemove", function(event) {
 });
 
 canvas.element.addEventListener("click", function(event) {
+  console.log("event click canvas");
   var eventX = event.offsetX;
   var eventY = event.offsetY;
   if(create) {
@@ -471,19 +500,28 @@ canvas.element.addEventListener("click", function(event) {
   }
 });
 
-var contextMenu = document.getElementById("contextmenu");
-
-function displayContextMenu(display) {
-  contextMenu.style.display = display ? 'block' : 'none';
-}
-
 canvas.element.addEventListener("contextmenu", function(event) {
-  event.preventDefault();
-  displayContextMenu(true);
-  contextMenu.style.top = event.y+'px';
-  contextMenu.style.left = event.x+'px';
+  if(!create) {
+    var rectSel = repoRectangles.getRectContainPoint(event.offsetX, event.offsetY);
+    if(rectSel != null) {
+      if(rectSel.isSelected) {
+        console.log("show menu");
+        displayContextMenu(true, rectSel, event);
+      } else {
+        if(rectSelected != null) {
+          rectSelected.selected();
+        }
+        rectSelected = rectSel;//Armazeno o novo retangulo selecionado
+        canvas.element.style.cursor = "move";
+        rectSelected.selected();
+        console.log("show menu");
+        displayContextMenu(true, rectSel, event);
+      }
+    }
+  }
 });
 
 document.addEventListener('mousedown', function(event) {
+  console.log("hide menu");
   displayContextMenu(false);
 });
