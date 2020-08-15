@@ -11,7 +11,7 @@ var dragged = null;
 var resized = null;
 var rectSelected = null;
 var cursorModo = null;
-var count = 0;
+var nextId = 0;
 var cMenu = false;
 
 debugOnDocument("status", "selecionando");
@@ -27,7 +27,7 @@ function Canvas() {
 
   //Essa função desenha no canvas
   this.draw = function() {
-    var rectangles = repoRectangles.getRectangles();
+    var rectangles = repoRectangles.getAll();
       for(rect in rectangles) {
       rectangles[rect].drawRect();
     }
@@ -53,7 +53,9 @@ function Canvas() {
   };
 }
 
-/*############################################# RECTANGLE #############################################*/
+/*#####################################################################################################
+  ############################################# RECTANGLE #############################################
+  #####################################################################################################*/
 //Essa função cria um objeto do tipo 'rectangle' a partir da cordenadas top-left e bottom-down
 function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin = 0) {
   this.id = newId;
@@ -217,7 +219,39 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
 
 }
 
-/*###################################### REPOSITORIO DE  RECTANGLES ######################################*/
+/*########################################################################################################
+  ###################################### REPOSITORIO DE  RECTANGLES ######################################
+  ########################################################################################################*/
+var edition = {
+  frames: [],
+
+  frame: null,
+
+  it: 0;
+
+  init: function() {
+    this.frames[it] = repoRectangles;
+    this.frame = frames[it];
+    this.new();
+  },
+
+  new: function() {
+    this.frames[++it] = repoRectangles;
+  },
+
+  previous: function() {
+    if(it > 0) {
+      this.frame = this.frames[it - 1];
+    }
+  },
+
+  next: function() {
+    if(it < this.frames.length) {
+      this.frame = this.frames[it + 1];
+    }
+  }
+};
+
 //Repositorio de retangulos
 var repoRectangles = {
   rectangles: [],
@@ -236,7 +270,15 @@ var repoRectangles = {
     }
   },
 
-  getRectangles: function() {
+  get: function(id) {
+    for(i = 0; i < this.rectangles.length; i++) {
+      if(this.rectangles[i].id == id) {
+        return this.rectangles[i];
+      }
+    }
+  },
+
+  getAll: function() {
     return this.rectangles;
   },
 
@@ -269,6 +311,55 @@ var repoRectangles = {
 
 };
 
+/*########################################################################################################
+  ########################################## FUNÇÕES AUXILIARES ##########################################
+  ########################################################################################################*/
+
+function updateId() {
+  var cookies = document.cookie;
+  cookies = cookies.split("; ");
+  for(i = 0; i < cookies.length; i++) {
+    var cookie = cookies[i].split("=");
+    if(Number(cookie[0]) > nextId) {
+      nextId = Number(cookie[0]);
+    }
+  }
+  nextId++;
+  console.log(nextId);
+}
+
+function save() {
+  console.log("salvando canvas");
+  var rects = repoRectangles.getAll();
+  for(i = 0; i < rects.length; i++) {
+    document.cookie = rects[i].id+"="+rects[i].topLeft+","+rects[i].bottomRight;
+  }
+}
+
+function load() {
+  var cookies = document.cookie;
+
+  if(cookies != "") {
+    repoRectangles.removeAll();
+    cookies = cookies.split("; ");
+    for(i = 0; i < cookies.length; i++) {
+      var cookie = cookies[i].split("=");
+      var idC = cookie[0];
+      if(idC > nextId) {
+        nextId = idC;
+      }
+      var coords = cookie[1].split(",");
+      console.log(idC,coords);
+      var rect = new Rectangle(Number(coords[0]), Number(coords[1]), Number(coords[2]), Number(coords[3]), Number(idC), 5);
+      rect.container = canvas;
+      console.log(rect);
+      repoRectangles.add(rect);
+    }
+    updateList();
+    canvas.redraw();
+  }
+}
+
 function debugOnDocument(element, value) {
   document.getElementById(element).value = value;
 }
@@ -276,33 +367,54 @@ function debugOnDocument(element, value) {
 function updateList() {
   let table = document.getElementById("list");
   table.innerHTML = "";
-  let rectangles = repoRectangles.getRectangles();
+  let rectangles = repoRectangles.getAll();
   for (var i = 0; i < rectangles.length; i++) {
     let line = document.createElement("tr");
-    let colum1 = document.createElement("td");
-    colum1.id = rectangles[i].id;
-    colum1.innerHTML = rectangles[i].id;
-    let colum2 = document.createElement("td");
+    let columId = document.createElement("td");
+    let columSelect = document.createElement("td");
+    let columDelete = document.createElement("td");
+    let button1 = document.createElement("button");
+    let button2 = document.createElement("button");
 
-    //Criando o botão de excluir
-    let button = document.createElement("button");
-    button.type = "button";
-    button.innerHTML = "Excluir";
-    button.addEventListener("click", function() {
-      repoRectangles.remove(colum1.id);
+    columId.id = rectangles[i].id;
+    columId.innerHTML = rectangles[i].id;
+
+    //Criando o botão de selecionar
+    button1.type = "button";
+    button1.innerHTML = "Selecionar";
+    button1.addEventListener("click", function() {
+      if(!create) {
+        if(rectSelected != null) {
+          rectSelected.selected();//Aqui eu removo a seleção do ultimo retangulo selecionado
+        }
+        rectSelected = repoRectangles.get(columId.id);//Armazeno o novo retangulo selecionado
+        canvas.element.style.cursor = "move";
+        rectSelected.selected();
+      }
+    });
+
+    //Criando o botão de deletar
+    button2.type = "button";
+    button2.innerHTML = "Deletar";
+    button2.addEventListener("click", function() {
+      repoRectangles.remove(columId.id);
       updateList();
       canvas.redraw();
     });
 
-    colum2.appendChild(button);
-    line.appendChild(colum1);
-    line.appendChild(colum2);
+    columSelect.appendChild(button1);
+    columDelete.appendChild(button2);
+    line.appendChild(columId);
+    line.appendChild(columSelect);
+    line.appendChild(columDelete);
     table.appendChild(line);
   }
 }
 
 function removeRect(id) {
   repoRectangles.remove(id);
+  updateList();
+  canvas.redraw();
 }
 
 function displayContextMenu(display, rect = null, e = null) {
@@ -314,7 +426,7 @@ function displayContextMenu(display, rect = null, e = null) {
 
     let div = document.createElement("div");
     div.className = "context-menu-item";
-    div.addEventListener("click", function() {console.log("remove from contextmenu");removeRect(rect.id)}, true);
+    div.addEventListener("click", function() {console.log("remove from contextmenu");removeRect(rect.id)});
 
     let label = document.createElement("label");
     label.innerHTML = "Excluir retangulo ["+rect.id+"]";
@@ -324,6 +436,7 @@ function displayContextMenu(display, rect = null, e = null) {
     e.preventDefault();
     contextMenu.style.top = e.y+'px';
     contextMenu.style.left = e.x+'px';
+    e.stopPropagation()
   }
 }
 
@@ -372,9 +485,9 @@ function newRectangleFromMouse(firstCoord, secondCoord) {
   return new Rectangle(topLeft[0], topLeft[1], bottomRight[0], bottomRight[1], 0, 5);
 }
 
-/*------------------------------------------------------------------------------------------------
-  ------------------------------------------ CONTROLERS ------------------------------------------
-  ------------------------------------------------------------------------------------------------*/
+/*################################################################################################
+  ########################################## CONTROLERS ##########################################
+  ################################################################################################*/
 
 canvas.element.addEventListener("mousedown", function(event) {
   var eventX = event.offsetX;
@@ -452,6 +565,7 @@ canvas.element.addEventListener("mousemove", function(event) {
       }
       rectSelected.highlight();
     } else {
+      canvas.redraw();
       //caso 5 - o cursor não esta sobre nenhum triangulo
       canvas.element.style.cursor = cursorModo;
     }
@@ -461,7 +575,7 @@ canvas.element.addEventListener("mousemove", function(event) {
 });
 
 canvas.element.addEventListener("click", function(event) {
-  console.log("event click canvas");
+  //console.log("event click canvas");
   var eventX = event.offsetX;
   var eventY = event.offsetY;
   if(create) {
@@ -474,7 +588,7 @@ canvas.element.addEventListener("click", function(event) {
       canvas.secondPoint = [eventX, eventY];
       let rect = newRectangleFromMouse(canvas.firstPoint, canvas.secondPoint);
       rect.container = canvas;
-      rect.id = ++count;
+      rect.id = nextId++;
       repoRectangles.add(rect);
       updateList();
       canvas.redraw();
@@ -521,7 +635,14 @@ canvas.element.addEventListener("contextmenu", function(event) {
   }
 });
 
-document.addEventListener('mousedown', function(event) {
-  console.log("hide menu");
+document.addEventListener('click', function(event) {
+  console.log("hide menu by click");
   displayContextMenu(false);
 });
+
+document.addEventListener('contextmenu', function(event) {
+  console.log("hide menu by contextmenu");
+  displayContextMenu(false);
+});
+
+document.addEventListener('load', updateId());

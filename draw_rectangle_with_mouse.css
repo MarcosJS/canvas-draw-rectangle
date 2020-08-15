@@ -31,7 +31,13 @@ body {
   margin-top: 8px;
 }
 
+.status{
+  padding-bottom: 8px;
+  border-bottom: 1px solid;
+}
+
 table {
+  border-collapse: collapse;
   width: 100%;
 }
 
