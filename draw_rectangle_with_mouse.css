@@ -19,6 +19,14 @@ body {
     margin: 8px 0;
 }
 
+.control_main {
+  float: left;
+}
+
+.advance_comeback {
+  text-align: right;
+}
+
 .debug {
   margin-left: 8px;
   padding: 8px;
@@ -31,7 +39,7 @@ body {
   margin-top: 8px;
 }
 
-.status{
+.quant_rect_buffer{
   padding-bottom: 8px;
   border-bottom: 1px solid;
 }
@@ -62,9 +70,9 @@ th, td {
   background-color: #eee;
 }
 
-.context-menu-item {
-  padding: 4px;
+.context-menu-item label{
   padding-left: 20px;
+  margin-top: 40px;
 }
 
 .context-menu-item:hover {

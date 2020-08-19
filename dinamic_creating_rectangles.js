@@ -13,9 +13,14 @@ var rectSelected = null;
 var cursorModo = null;
 var nextId = 0;
 var cMenu = false;
-
+var lastEventDown = null;
+var histoEdit = new editionHistory();
+histoEdit.init();
 debugOnDocument("status", "selecionando");
 
+/*#####################################################################################################
+  ############################################### CANVAS ##############################################
+  #####################################################################################################*/
 function Canvas() {
   this.drawingNewRect =  false;
   this.firstPoint =  [];
@@ -27,7 +32,7 @@ function Canvas() {
 
   //Essa função desenha no canvas
   this.draw = function() {
-    var rectangles = repoRectangles.getAll();
+    var rectangles = histoEdit.buffer.getAll();
       for(rect in rectangles) {
       rectangles[rect].drawRect();
     }
@@ -70,7 +75,7 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
   this.isSelected = false;
   this.startDrag = null;
   this.startResize = null;
-  this.marinPosition = null;
+  this.marginPosition = null;
   this.margin = margin;
 
   this.containPoint = function(x, y) {
@@ -113,10 +118,7 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
       this.bottomRight[1] += varY;
     }
     this.startDrag = point;
-    repoRectangles.fixPrioritRects();
-    updateList();
     this.container.redraw();
-    //console.log("[DRAGGED] variação em x "+varX+" ,variação em y "+varY);
   };
 
   this.resize = function(point) {
@@ -177,8 +179,7 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
         break;
     }
     this.startResize = point;
-    repoRectangles.fixPrioritRects();
-    updateList();
+    histoEdit.buffer.fixPrioritRects();
     this.container.redraw();
   };
 
@@ -217,51 +218,25 @@ function Rectangle(topLeftX, topLeftY, bottomRightX, bottomRightY, newId, margin
     this.lineWidth = width;
   };
 
+  this.clone = function() {
+    var newRect = new Rectangle(this.topLeft[0], this.topLeft[1], this.bottomRight[0], this.bottomRight[1], this.id, this.margin);
+    newRect.container = this.container;
+    return newRect;
+  };
 }
 
 /*########################################################################################################
   ###################################### REPOSITORIO DE  RECTANGLES ######################################
   ########################################################################################################*/
-var edition = {
-  frames: [],
+function RepoRectangles(rectangles = []) {
+  this.rectangles = rectangles;
 
-  frame: null,
-
-  it: 0;
-
-  init: function() {
-    this.frames[it] = repoRectangles;
-    this.frame = frames[it];
-    this.new();
-  },
-
-  new: function() {
-    this.frames[++it] = repoRectangles;
-  },
-
-  previous: function() {
-    if(it > 0) {
-      this.frame = this.frames[it - 1];
-    }
-  },
-
-  next: function() {
-    if(it < this.frames.length) {
-      this.frame = this.frames[it + 1];
-    }
-  }
-};
-
-//Repositorio de retangulos
-var repoRectangles = {
-  rectangles: [],
-
-  add: function(rectangle) {
+  this.add = function(rectangle) {
     this.rectangles[this.rectangles.length] = rectangle;
     this.fixPrioritRects();
   },
 
-  remove: function(id) {
+  this.remove = function(id) {
     for(i = 0; i < this.rectangles.length; i++) {
       if(this.rectangles[i].id == id) {
         this.rectangles.splice(i,1);
@@ -270,23 +245,23 @@ var repoRectangles = {
     }
   },
 
-  get: function(id) {
+  this.get = function(id) {
     for(i = 0; i < this.rectangles.length; i++) {
       if(this.rectangles[i].id == id) {
         return this.rectangles[i];
       }
     }
-  },
+  };
 
-  getAll: function() {
+  this.getAll = function() {
     return this.rectangles;
-  },
+  };
 
-  removeAll: function() {
+  this.removeAll = function() {
     this.rectangles = [];
-  },
+  };
 
-  fixPrioritRects: function() {
+  this.fixPrioritRects = function() {
     for(var i = this.rectangles.length - 1; i > 0; i--) {
       for(var j = i; j > 0; j--) {//com j = i garante-se que a comparação vai ser feita somente com o anterior
         if(this.rectangles[j - 1].containRect(this.rectangles[i])) {//verificando se retangulo esta contigo no anterior
@@ -296,10 +271,10 @@ var repoRectangles = {
         }
       }
     }
-  },
+  };
 
   //Essa função retorna o retangulo mais profundo sobre o qual o mouse esta em cima
-  getRectContainPoint: function (x, y) {
+  this.getRectContainPoint = function (x, y) {
     var rectMostDeep = null;
     for (var i = this.rectangles.length; i > 0; i--) {
       if(this.rectangles[i - 1].containPoint(x, y)) {
@@ -307,14 +282,72 @@ var repoRectangles = {
       }
     }
     return rectMostDeep;
-  }
+  };
 
-};
+  this.clone = function() {
+    var rects = [];
+    for(i = 0; i < this.rectangles.length; i++) {
+      rects[i] = this.rectangles[i].clone();
+    }
+    return new RepoRectangles(rects);
+  };
+
+}
+
+/*########################################################################################################
+  ########################################## HISTORICO DE EDIÇÃO #########################################
+  ########################################################################################################*/
+function editionHistory() {
+  this.repoFrames = [];
+  this.buffer =  null;
+  this.frame = 0;
+
+  this.init = function() {
+    this.frame--;
+    this.buffer = new RepoRectangles();
+    this.new();
+  };
+
+  this.new =  function() {
+    if(this.frame < this.repoFrames.length - 1) {
+      this.repoFrames.splice((this.frame + 1), (this.repoFrames.length - this.frame + 1));
+    }
+    this.frame++;
+    this.repoFrames[this.frame] = this.buffer.clone();
+    this.debugOnDocument();
+  };
+
+  this.previous = function() {
+    if(this.frame > 0) {
+      this.buffer = this.repoFrames[--this.frame].clone();
+    }
+    this.debugOnDocument();
+  };
+
+  this.next = function() {
+    if(this.frame < this.repoFrames.length - 1) {
+      this.buffer = this.repoFrames[++this.frame].clone();
+    }
+    this.debugOnDocument();
+  };
+
+  this.debugOnDocument = function() {
+    var quadro = "";
+    for(i = 0; i < this.repoFrames.length; i++) {
+      if(i == this.frame) {
+        quadro = quadro.concat("*");
+      } else {
+        quadro = quadro.concat(i);
+      }
+    }
+    debugOnDocument("quadro", quadro);
+    debugOnDocument("quant_rect_buffer", this.buffer.getAll().length);
+  };
+}
 
 /*########################################################################################################
   ########################################## FUNÇÕES AUXILIARES ##########################################
   ########################################################################################################*/
-
 function updateId() {
   var cookies = document.cookie;
   cookies = cookies.split("; ");
@@ -330,7 +363,7 @@ function updateId() {
 
 function save() {
   console.log("salvando canvas");
-  var rects = repoRectangles.getAll();
+  var rects = histoEdit.buffer.getAll();
   for(i = 0; i < rects.length; i++) {
     document.cookie = rects[i].id+"="+rects[i].topLeft+","+rects[i].bottomRight;
   }
@@ -340,7 +373,7 @@ function load() {
   var cookies = document.cookie;
 
   if(cookies != "") {
-    repoRectangles.removeAll();
+    histoEdit.buffer.removeAll();
     cookies = cookies.split("; ");
     for(i = 0; i < cookies.length; i++) {
       var cookie = cookies[i].split("=");
@@ -353,7 +386,7 @@ function load() {
       var rect = new Rectangle(Number(coords[0]), Number(coords[1]), Number(coords[2]), Number(coords[3]), Number(idC), 5);
       rect.container = canvas;
       console.log(rect);
-      repoRectangles.add(rect);
+      histoEdit.buffer.add(rect);
     }
     updateList();
     canvas.redraw();
@@ -367,7 +400,7 @@ function debugOnDocument(element, value) {
 function updateList() {
   let table = document.getElementById("list");
   table.innerHTML = "";
-  let rectangles = repoRectangles.getAll();
+  let rectangles = histoEdit.buffer.getAll();
   for (var i = 0; i < rectangles.length; i++) {
     let line = document.createElement("tr");
     let columId = document.createElement("td");
@@ -387,7 +420,7 @@ function updateList() {
         if(rectSelected != null) {
           rectSelected.selected();//Aqui eu removo a seleção do ultimo retangulo selecionado
         }
-        rectSelected = repoRectangles.get(columId.id);//Armazeno o novo retangulo selecionado
+        rectSelected = histoEdit.buffer.get(columId.id);//Armazeno o novo retangulo selecionado
         canvas.element.style.cursor = "move";
         rectSelected.selected();
       }
@@ -397,7 +430,7 @@ function updateList() {
     button2.type = "button";
     button2.innerHTML = "Deletar";
     button2.addEventListener("click", function() {
-      repoRectangles.remove(columId.id);
+      histoEdit.buffer.remove(columId.id);
       updateList();
       canvas.redraw();
     });
@@ -412,7 +445,7 @@ function updateList() {
 }
 
 function removeRect(id) {
-  repoRectangles.remove(id);
+  histoEdit.buffer.remove(id);
   updateList();
   canvas.redraw();
 }
@@ -436,7 +469,7 @@ function displayContextMenu(display, rect = null, e = null) {
     e.preventDefault();
     contextMenu.style.top = e.y+'px';
     contextMenu.style.left = e.x+'px';
-    e.stopPropagation()
+    e.stopPropagation();
   }
 }
 
@@ -457,9 +490,21 @@ function createOn() {
 }
 
 function reset() {
-  repoRectangles.removeAll();
+  histoEdit.buffer.removeAll();
   canvas.clear();
   updateList();
+}
+
+function advance() {
+  histoEdit.next();
+  updateList();
+  canvas.redraw();
+}
+
+function comeBack() {
+  histoEdit.previous();
+  updateList();
+  canvas.redraw();
 }
 
 //Essa função manipula as coordenadas dos cliques do mouse para desenhar um retangulo
@@ -493,18 +538,19 @@ canvas.element.addEventListener("mousedown", function(event) {
   var eventX = event.offsetX;
   var eventY = event.offsetY
   if(!create && (event.buttons == 1)) {
-    let rectSelected = repoRectangles.getRectContainPoint(eventX, eventY);
+    let rectSelected = histoEdit.buffer.getRectContainPoint(eventX, eventY);
     if(rectSelected && rectSelected.isSelected) {//retangulo sobre o qual esta o mouse é selecionado e o menu de contexto nao foi ativado
       marginPoint = rectSelected.isReadyToResize(eventX, eventY);
       if(marginPoint >= 0) {
         resized = rectSelected;
         resized.startResize = ([eventX, eventY]);
-        resized.marinPosition = marginPoint;
+        resized.marginPosition = marginPoint;
       } else {
         dragged = rectSelected;
         dragged.startDrag = ([eventX, eventY]);
-        console.log("rect: "+dragged.id+" é arrastavel");
+        //console.log("rect: "+dragged.id+" é arrastavel");
       }
+      lastEventDown = ([eventX, eventY]);//lastEventDown é usado para eliminar quantidade desnecessaria de frames de edição
     }
   }
 });
@@ -512,12 +558,18 @@ canvas.element.addEventListener("mousedown", function(event) {
 canvas.element.addEventListener("mouseup", function(event) {
   if(!create) {
     if(resized != null) {
+      if((lastEventDown[0] != event.offsetX) || (lastEventDown[1] != event.offsetY)) {
+        histoEdit.new();
+      }
       resized = null;
     } else if(dragged != null) {
-        console.log("rect: "+dragged.id+" não é arrastavel");
-        dragged = null;
+      //console.log("rect: "+dragged.id+" não é arrastavel");
+      if((lastEventDown[0] != event.offsetX) || (lastEventDown[1] != event.offsetY)) {
+        histoEdit.new();
       }
+      dragged = null;
     }
+  }
 });
 
 canvas.element.addEventListener("mousemove", function(event) {
@@ -536,14 +588,17 @@ canvas.element.addEventListener("mousemove", function(event) {
   }else if(resized != null) {
     debugOnDocument("status", "redimensionando");
     resized.resize([eventX, eventY]);
+    updateList();
   //caso 3
   } else if(dragged != null) {//Se estiver movendo algum retangulo
     debugOnDocument("status", "movendo");
     dragged.draggedTo([eventX, eventY]);
+    histoEdit.buffer.fixPrioritRects();
+    updateList();
 
   } else {
     //Recuperando o retangulo sobre o qual esta o mouse
-    var rectSelected = repoRectangles.getRectContainPoint(eventX, eventY);
+    var rectSelected = histoEdit.buffer.getRectContainPoint(eventX, eventY);
     if(rectSelected != null) {
       if(rectSelected.isSelected) {//Se o retangulo recuperado estiver selecionado
         //caso 4 - o cursor esta sobre um retangulo selecionado
@@ -575,7 +630,6 @@ canvas.element.addEventListener("mousemove", function(event) {
 });
 
 canvas.element.addEventListener("click", function(event) {
-  //console.log("event click canvas");
   var eventX = event.offsetX;
   var eventY = event.offsetY;
   if(create) {
@@ -589,14 +643,16 @@ canvas.element.addEventListener("click", function(event) {
       let rect = newRectangleFromMouse(canvas.firstPoint, canvas.secondPoint);
       rect.container = canvas;
       rect.id = nextId++;
-      repoRectangles.add(rect);
+      histoEdit.buffer.add(rect);
+      console.log("[click]add rect "+histoEdit.buffer.getAll().length);
+      histoEdit.new();
       updateList();
       canvas.redraw();
       debugOnDocument("second-click", "X: "+eventX+"; Y: "+eventY);
     }
   } else {
     debugOnDocument("status", "selecionando");
-    var rectSel = repoRectangles.getRectContainPoint(eventX, eventY);
+    var rectSel = histoEdit.buffer.getRectContainPoint(eventX, eventY);
     if(rectSel != null) {
       if(rectSelected != null) {
         rectSelected.selected();//Aqui eu removo a seleção do ultimo retangulo selecionado
@@ -612,11 +668,12 @@ canvas.element.addEventListener("click", function(event) {
       rectSelected = rectSel;//Selecionado é igual a nulo
     }
   }
+
 });
 
 canvas.element.addEventListener("contextmenu", function(event) {
   if(!create) {
-    var rectSel = repoRectangles.getRectContainPoint(event.offsetX, event.offsetY);
+    var rectSel = histoEdit.buffer.getRectContainPoint(event.offsetX, event.offsetY);
     if(rectSel != null) {
       if(rectSel.isSelected) {
         console.log("show menu");
@@ -641,7 +698,6 @@ document.addEventListener('click', function(event) {
 });
 
 document.addEventListener('contextmenu', function(event) {
-  console.log("hide menu by contextmenu");
   displayContextMenu(false);
 });
 

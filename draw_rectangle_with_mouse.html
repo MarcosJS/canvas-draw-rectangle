@@ -10,11 +10,17 @@
       <div class="content">
 
         <div class="control">
-          <input type="button" value="Criar" id="create" onclick="createOn()">
-          <input type="button" value="Editar" id="edit" onclick="editOn()">
-          <input type="button" value="Limpar" id="reset" onclick="reset()">
-          <input type="button" value="Salvar" id="salve" onclick="save()">
-          <input type="button" value="carregar" id="load" onclick="load()">
+          <div class="control_main">
+            <input type="button" value="Criar" id="create" onclick="createOn()">
+            <input type="button" value="Editar" id="edit" onclick="editOn()">
+            <input type="button" value="Limpar" id="reset" onclick="reset()">
+            <input type="button" value="Salvar" id="salve" onclick="save()">
+            <input type="button" value="carregar" id="load" onclick="load()">
+          </div>
+          <div class="advance_comeback">
+            <input type="button" value=&#8592; id="voltar" onclick="comeBack()">
+            <input type="button" value=&#8594; id="avancar" onclick="advance()">
+          </div>
         </div>
 
         <div class="canvas">
@@ -51,6 +57,16 @@
         <div class="elem-debug status">
           <label for="status">Status</label>
           <input type="text" id="status">
+        </div>
+
+        <div class="elem-debug quadro">
+          <label for="quadro">Quadro</label>
+          <input type="text" id="quadro">
+        </div>
+
+        <div class="elem-debug quant_rect_buffer">
+          <label for="quant_rect_buffer">Quant ret buffer</label>
+          <input type="text" id="quant_rect_buffer">
         </div>
 
         <div class="elem-debug list">
